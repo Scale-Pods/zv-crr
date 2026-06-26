@@ -9,45 +9,46 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-    /* ── Light Theme: Frosted Daylight ─────────────────────────────────────── */
-    --bg-app:    #F2F2F7;
+    /* ── Light Theme: Frosted Modern macOS ─────────────────────────────────── */
+    --bg-app:    #F5F5F7; /* Apple system grey background */
     --bg-layer1: #FFFFFF;
-    --bg-layer2: #F2F2F7;
+    --bg-layer2: #F5F5F7;
     --bg-layer3: #E5E5EA;
 
-    --fill-primary:    rgba(120,120,128,0.36);
-    --fill-secondary:  rgba(120,120,128,0.32);
-    --fill-tertiary:   rgba(118,118,128,0.24);
-    --fill-quaternary: rgba(116,116,128,0.18);
+    --fill-primary:    rgba(0,0,0,0.15);
+    --fill-secondary:  rgba(0,0,0,0.08);
+    --fill-tertiary:   rgba(0,0,0,0.04);
+    --fill-quaternary: rgba(0,0,0,0.02);
 
-    --glass-fill:       rgba(255,255,255,0.72);
-    --glass-fill-hover: rgba(255,255,255,0.86);
-    --glass-blur:       blur(40px) saturate(180%);
-    --glass-border:     rgba(255,255,255,0.90);
-    --glass-shadow:     0 1px 2px rgba(0,0,0,0.04),
-                        0 4px 8px rgba(0,0,0,0.06),
-                        0 16px 32px rgba(0,0,0,0.08),
-                        inset 0 1px 0 rgba(255,255,255,1.0);
-    --glass-shadow-hover: 0 2px 4px rgba(0,0,0,0.06),
-                          0 8px 16px rgba(0,0,0,0.08),
-                          0 24px 48px rgba(0,0,0,0.12),
+    --glass-fill:       rgba(255,255,255,0.76);
+    --glass-fill-hover: rgba(255,255,255,0.88);
+    --glass-blur:       blur(30px) saturate(190%);
+    --glass-border:     rgba(0,0,0,0.06); /* Sophisticated dark stroke for light mode */
+    --glass-border-hover: rgba(0,0,0,0.12);
+    --glass-shadow:     0 1px 2px rgba(0,0,0,0.03),
+                        0 4px 12px rgba(0,0,0,0.04),
+                        0 12px 24px rgba(0,0,0,0.05),
+                        inset 0 1px 0 rgba(255,255,255,0.9);
+    --glass-shadow-hover: 0 2px 4px rgba(0,0,0,0.04),
+                          0 8px 20px rgba(0,0,0,0.06),
+                          0 20px 36px rgba(0,0,0,0.08),
                           inset 0 1px 0 rgba(255,255,255,1.0);
 
     --label-primary:    rgba(0,0,0,0.88);
     --label-secondary:  rgba(60,60,67,0.60);
-    --label-tertiary:   rgba(60,60,67,0.30);
-    --label-quaternary: rgba(60,60,67,0.18);
+    --label-tertiary:   rgba(60,60,67,0.35);
+    --label-quaternary: rgba(60,60,67,0.20);
 
-    --separator:        rgba(60,60,67,0.29);
-    --separator-opaque: #C6C6C8;
+    --separator:        rgba(0,0,0,0.08);
+    --separator-opaque: #D1D1D6;
 
     /* Apple System Colours (Light) */
     --blue:   #007AFF;  --green:  #34C759;  --indigo: #5856D6;
     --orange: #FF9500;  --pink:   #FF2D55;  --purple: #AF52DE;
     --red:    #FF3B30;  --teal:   #5AC8FA;  --yellow: #FFCC00;
 
-    /* shadcn/ui HSL bridge — map Apple system colours to HSL for backward compat */
-    --background: 230 100% 97%;
+    /* shadcn/ui HSL bridge */
+    --background: 230 20% 97%;
     --foreground: 230 15% 12%;
     --card: 0 0% 100%;
     --card-foreground: 230 15% 12%;
@@ -63,12 +64,12 @@
     --accent-foreground: 230 15% 12%;
     --destructive: 0 85% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
+    --border: 220 13% 90%;
+    --input: 220 13% 90%;
     --ring: 215 100% 24%;
-    --radius: 14px;
+    --radius: 16px;
 
-    /* Chart colours */
+    /* Chart colors */
     --chart-1: 215 100% 50%;
     --chart-2: 142 71% 45%;
     --chart-3: 270 60% 60%;
@@ -76,62 +77,61 @@
     --chart-5: 180 70% 50%;
 }
 
-/* ── Dark Theme: Midnight Glass ──────────────────────────────────────────── */
+/* ── Dark Theme: macOS Space Obsidian ────────────────────────────────────── */
 .dark {
-    --bg-app:    #1C1C1E;
-    --bg-layer1: #2C2C2E;
-    --bg-layer2: #3A3A3C;
-    --bg-layer3: #48484A;
+    --bg-app:    #090A0E; /* Deep space black */
+    --bg-layer1: #14151B; /* Sleek workspace card background */
+    --bg-layer2: #1E2028;
+    --bg-layer3: #282B36;
 
-    --fill-primary:    rgba(120,120,128,0.36);
-    --fill-secondary:  rgba(120,120,128,0.32);
-    --fill-tertiary:   rgba(118,118,128,0.24);
-    --fill-quaternary: rgba(116,116,128,0.18);
+    --fill-primary:    rgba(255,255,255,0.16);
+    --fill-secondary:  rgba(255,255,255,0.10);
+    --fill-tertiary:   rgba(255,255,255,0.06);
+    --fill-quaternary: rgba(255,255,255,0.03);
 
-    --glass-fill:       rgba(44,44,46,0.72);
-    --glass-fill-hover: rgba(58,58,60,0.80);
-    --glass-blur:       blur(40px) saturate(180%);
-    --glass-border:     rgba(255,255,255,0.08);
-    --glass-shadow:     0 2px 4px rgba(0,0,0,0.12),
-                        0 8px 16px rgba(0,0,0,0.18),
-                        0 24px 48px rgba(0,0,0,0.24),
-                        inset 0 1px 0 rgba(255,255,255,0.08);
-    --glass-shadow-hover: 0 4px 8px rgba(0,0,0,0.14),
-                          0 16px 32px rgba(0,0,0,0.22),
-                          0 40px 72px rgba(0,0,0,0.28),
-                          inset 0 1px 0 rgba(255,255,255,0.12);
+    --glass-fill:       rgba(18,19,25,0.62); /* Highly transparent glass overlays */
+    --glass-fill-hover: rgba(28,29,38,0.72);
+    --glass-blur:       blur(30px) saturate(200%);
+    --glass-border:     rgba(255,255,255,0.06);
+    --glass-border-hover: rgba(255,255,255,0.14);
+    --glass-shadow:     0 4px 12px rgba(0,0,0,0.22),
+                        0 16px 32px rgba(0,0,0,0.28),
+                        inset 0 1px 0 rgba(255,255,255,0.06);
+    --glass-shadow-hover: 0 8px 20px rgba(0,0,0,0.28),
+                          0 24px 48px rgba(0,0,0,0.36),
+                          inset 0 1px 0 rgba(255,255,255,0.10);
 
-    --label-primary:    rgba(255,255,255,0.92);
-    --label-secondary:  rgba(235,235,245,0.60);
-    --label-tertiary:   rgba(235,235,245,0.30);
-    --label-quaternary: rgba(235,235,245,0.18);
+    --label-primary:    rgba(255,255,255,0.96);
+    --label-secondary:  rgba(235,235,245,0.65);
+    --label-tertiary:   rgba(235,235,245,0.38);
+    --label-quaternary: rgba(235,235,245,0.22);
 
-    --separator:        rgba(84,84,88,0.65);
-    --separator-opaque: #38383A;
+    --separator:        rgba(255,255,255,0.08);
+    --separator-opaque: #282932;
 
     /* Apple System Colours (Dark) */
     --blue:   #0A84FF;  --green:  #30D158;  --indigo: #5E5CE6;
     --orange: #FF9F0A;  --pink:   #FF375F;  --purple: #BF5AF2;
-    --red:    #FF453A;  --teal:   #40CBE0;  --yellow: #FFD60A;
+    --red:    --blue;   --teal:   #40CBE0;  --yellow: #FFD60A;
 
-    --background: 230 15% 12%;
-    --foreground: 0 0% 92%;
-    --card: 230 12% 17%;
-    --card-foreground: 0 0% 92%;
-    --popover: 230 12% 17%;
-    --popover-foreground: 0 0% 92%;
+    --background: 230 25% 4%;
+    --foreground: 0 0% 95%;
+    --card: 230 20% 7%;
+    --card-foreground: 0 0% 95%;
+    --popover: 230 20% 7%;
+    --popover-foreground: 0 0% 95%;
     --primary: 213 100% 52%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 230 12% 22%;
-    --secondary-foreground: 0 0% 92%;
-    --muted: 230 12% 22%;
+    --secondary: 230 15% 12%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 230 15% 12%;
     --muted-foreground: 220 9% 55%;
-    --accent: 230 12% 22%;
-    --accent-foreground: 0 0% 92%;
+    --accent: 230 15% 12%;
+    --accent-foreground: 0 0% 95%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 230 10% 24%;
-    --input: 230 10% 24%;
+    --border: 230 15% 14%;
+    --input: 230 15% 14%;
     --ring: 213 100% 52%;
 
     --chart-1: 213 100% 52%;
@@ -139,6 +139,19 @@
     --chart-3: 270 65% 65%;
     --chart-4: 25 90% 58%;
     --chart-5: 180 65% 55%;
+}
+
+/* ── Keyframe Animations for Apple Siri Mesh Gradient Background ─────────── */
+@keyframes floatGlow1 {
+    0% { transform: translate(0, 0) scale(1); opacity: 0.7; }
+    50% { transform: translate(6%, 8%) scale(1.15); opacity: 0.95; }
+    100% { transform: translate(-4%, 4%) scale(1.0); opacity: 0.7; }
+}
+
+@keyframes floatGlow2 {
+    0% { transform: translate(0, 0) scale(1); opacity: 0.7; }
+    50% { transform: translate(-8%, -4%) scale(1.2); opacity: 0.95; }
+    100% { transform: translate(4%, -6%) scale(1.0); opacity: 0.7; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -160,19 +173,46 @@
     body {
         @apply bg-background text-foreground;
         background-color: var(--bg-app);
-        background-image:
-            radial-gradient(ellipse 120% 60% at 10% 0%,   rgba(88,86,214,0.06) 0%, transparent 55%),
-            radial-gradient(ellipse 80%  50% at 90% 100%, rgba(10,132,255,0.05) 0%, transparent 50%);
         letter-spacing: -0.011em;
         line-height: 1.47;
+        overflow-x: hidden;
+        position: relative;
     }
 
-    .dark body {
-        background-color: var(--bg-app);
-        background-image:
-            radial-gradient(ellipse 140% 80% at 15% -5%,  rgba(88,86,214,0.12) 0%, transparent 55%),
-            radial-gradient(ellipse 80%  60% at 85% 95%,  rgba(10,132,255,0.08) 0%, transparent 50%),
-            radial-gradient(ellipse 60%  40% at 50% 50%,  rgba(48,209,88,0.04)  0%, transparent 50%);
+    body::before {
+        content: '';
+        position: fixed;
+        top: -12%;
+        left: -12%;
+        width: 65%;
+        height: 65%;
+        background: radial-gradient(circle at center, rgba(88,86,214,0.05) 0%, rgba(88,86,214,0) 70%);
+        filter: blur(80px);
+        pointer-events: none;
+        z-index: -10;
+        animation: floatGlow1 22s ease-in-out infinite alternate;
+    }
+
+    body::after {
+        content: '';
+        position: fixed;
+        bottom: -15%;
+        right: -12%;
+        width: 75%;
+        height: 75%;
+        background: radial-gradient(circle at center, rgba(10,132,255,0.04) 0%, rgba(10,132,255,0) 70%);
+        filter: blur(100px);
+        pointer-events: none;
+        z-index: -10;
+        animation: floatGlow2 28s ease-in-out infinite alternate;
+    }
+
+    .dark body::before {
+        background: radial-gradient(circle at center, rgba(88,86,214,0.14) 0%, rgba(88,86,214,0) 75%);
+    }
+
+    .dark body::after {
+        background: radial-gradient(circle at center, rgba(10,132,255,0.11) 0%, rgba(10,132,255,0) 75%);
     }
 
     h1, h2, h3, h4, h5, h6 {

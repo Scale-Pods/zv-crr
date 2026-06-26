@@ -86,7 +86,7 @@ export function WhatsAppClient({ outreach }: { outreach: CRROutreach[] }) {
             </div>
 
             {/* Table */}
-            <Card className="border-[var(--separator)] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)] bg-[var(--glass-fill)] overflow-hidden">
+            <Card className="overflow-hidden">
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
                         <table className="w-full">
@@ -240,7 +240,7 @@ function WaRow({ record: o, isExpanded, onToggle, formatDateTime, waStatusVarian
 
 function MiniCard({ title, value, icon }: { title: string; value: number; icon: React.ReactNode }) {
     return (
-        <Card className="bg-[var(--glass-fill)] border-[var(--separator)] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]">
+        <Card>
             <CardContent className="p-4 flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-[var(--fill-quaternary)]">{icon}</div>
                 <div>

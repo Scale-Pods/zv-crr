@@ -109,7 +109,7 @@ export function PredictionsClient({ predictions }: { predictions: CRRPrediction[
                 </div>
             </div>
 
-            <Card className="border-[var(--separator)] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)] bg-[var(--glass-fill)] overflow-hidden">
+            <Card className="overflow-hidden">
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
                         <table className="w-full">

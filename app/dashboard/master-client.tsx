@@ -47,51 +47,46 @@ export function MasterDashboardClient({ metrics, urgentPredictions }: Props) {
                     value={m.totalParties.toLocaleString()}
                     subtitle="Active predictions"
                     icon={<Users className="h-6 w-6" />}
-                    color="text-blue-600"
-                    bg="bg-[rgba(0,122,255,0.08)]"
-                    border="border-blue-100"
+                    color="text-blue-600 dark:text-blue-400"
+                    bg="bg-[rgba(0,122,255,0.08)] dark:bg-[rgba(10,132,255,0.12)]"
                 />
                 <MetricCard
                     title="Active Outreach"
                     value={m.activeOutreach.toLocaleString()}
                     subtitle="Currently being contacted"
                     icon={<Package className="h-6 w-6" />}
-                    color="text-emerald-600"
-                    bg="bg-[rgba(52,199,89,0.08)]"
-                    border="border-emerald-100"
+                    color="text-emerald-600 dark:text-emerald-400"
+                    bg="bg-[rgba(52,199,89,0.08)] dark:bg-[rgba(48,209,88,0.12)]"
                 />
                 <MetricCard
                     title="Responded"
                     value={m.totalResponded.toLocaleString()}
                     subtitle={`${m.responseRate.toFixed(1)}% response rate`}
                     icon={<MessageCircle className="h-6 w-6" />}
-                    color="text-purple-600"
-                    bg="bg-[rgba(175,82,222,0.08)]"
-                    border="border-purple-100"
+                    color="text-purple-600 dark:text-purple-400"
+                    bg="bg-[rgba(175,82,222,0.08)] dark:bg-[rgba(191,90,242,0.12)]"
                 />
                 <MetricCard
                     title="Orders Due Soon"
                     value={m.ordersDueSoon.toLocaleString()}
                     subtitle="Next 7 days"
                     icon={<AlertCircle className="h-6 w-6" />}
-                    color="text-amber-600"
-                    bg="bg-[rgba(255,149,0,0.08)]"
-                    border="border-amber-100"
+                    color="text-amber-600 dark:text-amber-400"
+                    bg="bg-[rgba(255,149,0,0.08)] dark:bg-[rgba(255,159,10,0.12)]"
                 />
                 <MetricCard
                     title="Avg Step"
                     value={m.avgCurrentStep.toString()}
                     subtitle="Outreach progress"
                     icon={<Activity className="h-6 w-6" />}
-                    color="text-indigo-600"
-                    bg="bg-indigo-50"
-                    border="border-indigo-100"
+                    color="text-indigo-600 dark:text-indigo-400"
+                    bg="bg-indigo-50 dark:bg-[rgba(94,92,230,0.12)]"
                 />
             </div>
 
             {/* Prediction Analytics */}
             <div className="grid gap-6 lg:grid-cols-3">
-                <Card className="border-[var(--separator)] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)] bg-[var(--glass-fill)] overflow-hidden">
+                <Card className="overflow-hidden">
                     <CardHeader className="pb-2">
                         <div className="flex items-center gap-2">
                             <div className="p-2 bg-[rgba(245,158,11,0.08)] text-amber-600 rounded-lg">
@@ -105,7 +100,7 @@ export function MasterDashboardClient({ metrics, urgentPredictions }: Props) {
                     </CardContent>
                 </Card>
 
-                <Card className="border-[var(--separator)] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)] bg-[var(--glass-fill)] overflow-hidden">
+                <Card className="overflow-hidden">
                     <CardHeader className="pb-2">
                         <div className="flex items-center gap-2">
                             <div className="p-2 bg-[rgba(16,185,129,0.08)] text-emerald-600 rounded-lg">
@@ -119,7 +114,7 @@ export function MasterDashboardClient({ metrics, urgentPredictions }: Props) {
                     </CardContent>
                 </Card>
 
-                <Card className="border-[var(--separator)] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)] bg-[var(--glass-fill)] overflow-hidden">
+                <Card className="overflow-hidden">
                     <CardHeader className="pb-2">
                         <div className="flex items-center gap-2">
                             <div className="p-2 bg-[rgba(139,92,246,0.08)] text-purple-600 rounded-lg">
@@ -136,7 +131,7 @@ export function MasterDashboardClient({ metrics, urgentPredictions }: Props) {
 
             {/* Outreach Analytics */}
             <div className="grid gap-6 lg:grid-cols-2">
-                <Card className="border-[var(--separator)] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)] bg-[var(--glass-fill)] overflow-hidden">
+                <Card className="overflow-hidden">
                     <CardHeader className="pb-2">
                         <div className="flex items-center gap-2">
                             <div className="p-2 bg-[rgba(0,122,255,0.08)] text-blue-600 rounded-lg">
@@ -158,7 +153,7 @@ export function MasterDashboardClient({ metrics, urgentPredictions }: Props) {
                     </CardContent>
                 </Card>
 
-                <Card className="border-[var(--separator)] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)] bg-[var(--glass-fill)] overflow-hidden">
+                <Card className="overflow-hidden">
                     <CardHeader className="pb-2">
                         <div className="flex items-center gap-2">
                             <div className="p-2 bg-[rgba(175,82,222,0.08)] text-purple-600 rounded-lg">
@@ -184,25 +179,32 @@ export function MasterDashboardClient({ metrics, urgentPredictions }: Props) {
     );
 }
 
-function MetricCard({ title, value, subtitle, icon, color, bg, border }: {
+function MetricCard({ title, value, subtitle, icon, color, bg }: {
     title: string;
     value: string;
     subtitle: string;
     icon: React.ReactNode;
     color: string;
     bg: string;
-    border: string;
 }) {
+    // Determine accent color from the color prop
+    const accentColor = color.includes('blue') ? 'var(--blue)' : 
+                         color.includes('emerald') ? 'var(--green)' : 
+                         color.includes('purple') ? 'var(--purple)' : 
+                         color.includes('amber') ? 'var(--orange)' : 'var(--indigo)';
+
     return (
-        <Card className={`bg-[var(--glass-fill)] border ${border} shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)] overflow-hidden relative group hover:shadow-[var(--glass-shadow-hover)] transition-all duration-300`}>
-            <CardContent className="p-6">
+        <Card className="overflow-hidden relative group">
+            {/* Left macOS-style accent indicator */}
+            <div className="absolute left-0 top-0 bottom-0 w-1.5" style={{ backgroundColor: accentColor }} />
+            <CardContent className="p-6 pl-7">
                 <div className="flex items-start justify-between relative z-10">
                     <div className="flex-1">
-                        <p className="text-sm font-semibold text-[var(--label-secondary)] mb-1">{title}</p>
-                        <h3 className="text-3xl font-bold text-[var(--label-primary)]">{value}</h3>
+                        <p className="text-xs font-bold text-[var(--label-secondary)] uppercase tracking-wider mb-1.5">{title}</p>
+                        <h3 className="text-3xl font-extrabold text-[var(--label-primary)] tracking-tight">{value}</h3>
                         <p className="text-xs font-medium text-[var(--label-tertiary)] mt-2">{subtitle}</p>
                     </div>
-                    <div className={`p-4 rounded-2xl ${bg} ${color} shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]`}>
+                    <div className={`p-3 rounded-xl ${bg} ${color} shadow-sm border border-transparent group-hover:scale-105 transition-transform duration-300`}>
                         {icon}
                     </div>
                 </div>
@@ -218,14 +220,14 @@ function QuickStat({ icon, label, value, color }: {
     color: string;
 }) {
     return (
-        <div className="flex items-center gap-4 bg-[var(--glass-fill)] border border-[var(--separator)] rounded-xl p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]">
+        <Card className="flex items-center gap-4 p-4">
             <div className={`p-3 rounded-xl bg-${color}-500/10`}>
                 {icon}
             </div>
             <div>
-                <p className="text-xs font-medium text-[var(--label-tertiary)]">{label}</p>
-                <p className="text-xl font-bold text-[var(--label-primary)]">{value.toLocaleString()}</p>
+                <p className="text-[10px] font-bold text-[var(--label-tertiary)] uppercase tracking-wider">{label}</p>
+                <p className="text-xl font-bold text-[var(--label-primary)] mt-0.5">{value.toLocaleString()}</p>
             </div>
-        </div>
+        </Card>
     );
 }
