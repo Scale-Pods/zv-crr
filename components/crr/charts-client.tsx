@@ -23,8 +23,16 @@ export function CRRPieChart({ data, height = 280 }: { data: PieChartData[]; heig
         );
     }
 
+    const total = data.reduce((acc, curr) => acc + curr.value, 0);
+
     return (
-        <div style={{ height, minHeight: height }}>
+        <div className="relative" style={{ height, minHeight: height }}>
+            {/* Centered Total Counter for Premium Look */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none animate-in fade-in duration-500" style={{ transform: 'translateY(-16px)' }}>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--label-tertiary)]">Total</span>
+                <span className="text-xl font-extrabold text-[var(--label-primary)] mt-0.5">{total}</span>
+            </div>
+
             <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                     <Pie
@@ -42,20 +50,40 @@ export function CRRPieChart({ data, height = 280 }: { data: PieChartData[]; heig
                         ))}
                     </Pie>
                     <Tooltip
-                        contentStyle={{
-                            backgroundColor: 'var(--glass-fill)',
-                            borderRadius: '12px',
-                            border: '1px solid var(--separator)',
-                            backdropFilter: 'blur(24px)',
-                            fontSize: 13,
+                        content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                                const item = payload[0];
+                                const percentage = total > 0 ? ((item.value as number) / total * 100).toFixed(1) : '0';
+                                return (
+                                    <div className="bg-[var(--glass-fill)] backdrop-blur-md rounded-xl p-3 border border-[var(--separator)] shadow-[var(--glass-shadow)] text-xs">
+                                        <div className="flex items-center gap-2 font-semibold text-[var(--label-primary)]">
+                                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.payload.color }} />
+                                            <span>{item.name}</span>
+                                        </div>
+                                        <div className="mt-1.5 text-[var(--label-secondary)] pl-4 space-y-0.5">
+                                            <div>Count: <span className="font-bold text-[var(--label-primary)]">{item.value}</span></div>
+                                            <div>Share: <span className="font-bold text-[var(--label-primary)]">{percentage}%</span></div>
+                                        </div>
+                                    </div>
+                                );
+                            }
+                            return null;
                         }}
                     />
                     <Legend
                         verticalAlign="bottom"
                         height={36}
-                        formatter={(value: string) => (
-                            <span style={{ color: 'var(--label-secondary)', fontSize: 12 }}>{value}</span>
-                        )}
+                        iconType="circle"
+                        iconSize={8}
+                        formatter={(value: string, entry: any) => {
+                            const payload = entry.payload;
+                            const count = payload ? payload.value : null;
+                            return (
+                                <span className="text-xs font-semibold text-[var(--label-secondary)] hover:text-[var(--label-primary)] transition-colors">
+                                    {value} {count != null && <span className="text-[10px] text-[var(--label-tertiary)] font-normal ml-0.5">({count})</span>}
+                                </span>
+                            );
+                        }}
                     />
                 </PieChart>
             </ResponsiveContainer>
@@ -105,13 +133,22 @@ export function CRRBarChart({
                         label={yLabel ? { value: yLabel, angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: 'var(--label-tertiary)' } } : undefined}
                     />
                     <Tooltip
-                        cursor={{ fill: 'rgba(0,0,0,0.04)' }}
-                        contentStyle={{
-                            backgroundColor: 'var(--glass-fill)',
-                            borderRadius: '12px',
-                            border: '1px solid var(--separator)',
-                            backdropFilter: 'blur(24px)',
-                            fontSize: 13,
+                        cursor={{ fill: 'var(--fill-quaternary)', opacity: 0.15 }}
+                        content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                                const item = payload[0];
+                                return (
+                                    <div className="bg-[var(--glass-fill)] backdrop-blur-md rounded-xl p-3 border border-[var(--separator)] shadow-[var(--glass-shadow)] text-xs">
+                                        <div className="font-semibold text-[var(--label-primary)]">
+                                            {item.payload[xKey]}
+                                        </div>
+                                        <div className="mt-1 text-[var(--label-secondary)]">
+                                            {yLabel || 'Value'}: <span className="font-bold text-[var(--label-primary)]">{item.value}</span>
+                                        </div>
+                                    </div>
+                                );
+                            }
+                            return null;
                         }}
                     />
                     <Bar dataKey={yKey} fill={color} radius={[6, 6, 0, 0]} barSize={32} />
@@ -164,12 +201,21 @@ export function CRRAreaChart({
                         allowDecimals={false}
                     />
                     <Tooltip
-                        contentStyle={{
-                            backgroundColor: 'var(--glass-fill)',
-                            borderRadius: '12px',
-                            border: '1px solid var(--separator)',
-                            backdropFilter: 'blur(24px)',
-                            fontSize: 13,
+                        content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                                const item = payload[0];
+                                return (
+                                    <div className="bg-[var(--glass-fill)] backdrop-blur-md rounded-xl p-3 border border-[var(--separator)] shadow-[var(--glass-shadow)] text-xs">
+                                        <div className="font-semibold text-[var(--label-primary)]">
+                                            {item.payload[xKey]}
+                                        </div>
+                                        <div className="mt-1 text-[var(--label-secondary)]">
+                                            Quantity: <span className="font-bold text-[var(--label-primary)]">{item.value} MT</span>
+                                        </div>
+                                    </div>
+                                );
+                            }
+                            return null;
                         }}
                     />
                     <Area

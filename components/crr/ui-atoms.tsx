@@ -61,7 +61,11 @@ export function ConfidenceBadge({ value }: { value: string | null }) {
 export function TierBadge({ value }: { value: string | null }) {
     if (!value) return <span className="text-[var(--label-tertiary)]">—</span>;
     const v = value.toLowerCase();
-    const variant = v === 'gold' ? 'warning' : v === 'platinum' ? 'purple' : v === 'silver' ? 'neutral' : v === 'bronze' ? 'warning' : 'neutral';
+    const variant =
+        v === 'platinum' || v === 'a' ? 'purple' :
+        v === 'gold' || v === 'b' ? 'info' :
+        v === 'silver' || v === 'c' ? 'warning' :
+        v === 'bronze' || v === 'd' ? 'neutral' : 'neutral';
     return <StatusBadge value={value} variant={variant} />;
 }
 
@@ -69,12 +73,26 @@ export function TierBadge({ value }: { value: string | null }) {
 export function TrendIndicator({ value }: { value: string | null }) {
     if (!value) return <span className="text-[var(--label-tertiary)]">—</span>;
     const v = value.toLowerCase();
-    const isUp = v === 'increasing' || v === 'up';
-    const isDown = v === 'decreasing' || v === 'down';
+    const isUp = v === 'increasing' || v === 'up' || v === 'rising' || v === 'strongly_rising';
+    const isDown = v === 'decreasing' || v === 'down' || v === 'falling' || v === 'strongly_falling';
+    const isVolatile = v === 'volatile';
+
+    let color = 'text-amber-600';
+    let arrow = '→';
+    if (isUp) {
+        color = 'text-emerald-600';
+        arrow = '↑';
+    } else if (isDown) {
+        color = 'text-rose-600';
+        arrow = '↓';
+    } else if (isVolatile) {
+        color = 'text-purple-600';
+        arrow = '⇅';
+    }
+
     return (
-        <span className={`flex items-center gap-1 text-xs font-semibold ${isUp ? 'text-emerald-600' : isDown ? 'text-rose-600' : 'text-amber-600'
-            }`}>
-            {isUp ? '↑' : isDown ? '↓' : '→'} {value}
+        <span className={`flex items-center gap-1 text-xs font-semibold ${color}`}>
+            {arrow} {value}
         </span>
     );
 }

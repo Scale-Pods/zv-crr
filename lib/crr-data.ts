@@ -164,6 +164,10 @@ export interface DashboardMetrics {
 }
 
 const TIER_COLORS: Record<string, string> = {
+    a: '#6366f1', // Premium Indigo
+    b: '#3b82f6', // Premium Blue
+    c: '#10b981', // Premium Emerald
+    d: '#f59e0b', // Premium Amber
     platinum: '#a78bfa',
     gold: '#f59e0b',
     silver: '#94a3b8',
@@ -172,16 +176,21 @@ const TIER_COLORS: Record<string, string> = {
 };
 
 const CONFIDENCE_COLORS: Record<string, string> = {
-    high: '#10b981',
-    medium: '#f59e0b',
-    low: '#ef4444',
+    high: '#10b981', // Emerald
+    medium: '#f59e0b', // Amber
+    low: '#ef4444', // Rose
     default: '#6b7280',
 };
 
 const TREND_COLORS: Record<string, string> = {
+    strongly_rising: '#059669', // Deep Emerald
+    rising: '#34d399', // Mint Green
+    stable: '#f59e0b', // Amber Yellow
+    falling: '#f87171', // Light Coral
+    strongly_falling: '#be123c', // Crimson Red
+    volatile: '#a78bfa', // Light Purple
     increasing: '#10b981',
     up: '#10b981',
-    stable: '#f59e0b',
     decreasing: '#ef4444',
     down: '#ef4444',
     default: '#6b7280',

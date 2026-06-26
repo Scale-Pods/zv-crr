@@ -33,8 +33,7 @@ export function PredictionsClient({ predictions }: { predictions: CRRPrediction[
             p.party_name.toLowerCase().includes(q) ||
             (p.tier || '').toLowerCase().includes(q) ||
             (p.alert_type || '').toLowerCase().includes(q) ||
-            (p.confidence || '').toLowerCase().includes(q) ||
-            (p.product_lines || '').toLowerCase().includes(q)
+            (p.confidence || '').toLowerCase().includes(q)
         );
     });
 
@@ -265,11 +264,10 @@ function PredictionRow({ prediction: p, isExpanded, onToggle, alertVariant, form
                                 <p className="text-sm text-[var(--label-primary)] leading-relaxed bg-[var(--glass-fill)] rounded-lg p-4 border border-[var(--separator)]">
                                     {p.action_message || 'No action message'}
                                 </p>
-                                <div className="mt-4 grid grid-cols-2 gap-3">
+                                <div className="mt-4 grid grid-cols-3 gap-3">
                                     <InfoBlock label="Cadence" value={p.cadence || '—'} />
                                     <InfoBlock label="Avg Monthly" value={p.avg_monthly_order_mt != null ? `${p.avg_monthly_order_mt} MT` : '—'} />
                                     <InfoBlock label="Last Order Qty" value={p.last_order_qty_mt != null ? `${p.last_order_qty_mt} MT` : '—'} />
-                                    <InfoBlock label="Product Lines" value={p.product_lines || '—'} />
                                 </div>
                             </div>
                         </div>
