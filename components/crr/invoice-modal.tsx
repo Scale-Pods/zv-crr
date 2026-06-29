@@ -289,10 +289,21 @@ export function InvoiceModal({ isOpen, onClose, record, prediction, onSuccess }:
             const res = await sendInvoiceEmailAction({
                 outreachId: record.id,
                 invoiceNumber: invoiceNo,
+                invoiceDate,
+                dueDate,
                 partyName,
+                contactPerson,
                 contactEmail: email,
-                pdfBase64,
+                contactPhone: phone,
+                itemDesc,
+                quantity,
+                unitPrice,
+                taxRate,
+                subtotal,
+                taxAmount,
                 amount: totalAmount,
+                terms,
+                pdfBase64,
             });
 
             if (res.error) {
@@ -319,10 +330,21 @@ export function InvoiceModal({ isOpen, onClose, record, prediction, onSuccess }:
             const res = await sendInvoiceWhatsAppAction({
                 outreachId: record.id,
                 invoiceNumber: invoiceNo,
+                invoiceDate,
+                dueDate,
                 partyName,
+                contactPerson,
+                contactEmail: email,
                 contactPhone: phone,
-                pdfBase64,
+                itemDesc,
+                quantity,
+                unitPrice,
+                taxRate,
+                subtotal,
+                taxAmount,
                 amount: totalAmount,
+                terms,
+                pdfBase64,
             });
 
             if (res.error) {
