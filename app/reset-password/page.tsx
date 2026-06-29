@@ -50,7 +50,7 @@ export default function ResetPasswordPage() {
                     {/* Logo */}
                     <div className="flex justify-center">
                         <div className="relative w-40 h-10">
-                            <Image src="/zv_logo.webp" alt="Naples Homes" fill className="object-contain" priority />
+                            <Image src="/zv_logo.webp" alt="Naples Homes" fill sizes="160px" className="object-contain" priority />
                         </div>
                     </div>
 

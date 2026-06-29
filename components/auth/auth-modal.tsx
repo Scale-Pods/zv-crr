@@ -30,6 +30,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
                                 src="/zv_logo.webp"
                                 alt="Naples Homes Logo"
                                 fill
+                                sizes="160px"
                                 className="object-contain"
                                 priority
                             />

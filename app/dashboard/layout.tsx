@@ -73,6 +73,7 @@ export default function DashboardLayout({
                                 src="/zv_logo.webp"
                                 alt="ZV Steels Logo"
                                 fill
+                                sizes="144px"
                                 className="object-contain"
                                 priority
                             />

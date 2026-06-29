@@ -4,7 +4,9 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Search, ChevronDown, ChevronUp, ArrowUpDown, Phone, Mail, MessageCircle, CheckCircle, XCircle, Clock } from "lucide-react";
 import { ColumnInfo, StatusBadge, StepProgress } from "@/components/crr/ui-atoms";
-import type { CRROutreach } from "@/lib/crr-data";
+import { Button } from "@/components/ui/button";
+import type { CRROutreach, CRRPrediction } from "@/lib/crr-data";
+import { InvoiceModal } from "@/components/crr/invoice-modal";
 
 const columnDescriptions: Record<string, string> = {
     party_name: "Customer/party name being contacted for reorder",
@@ -20,12 +22,16 @@ const columnDescriptions: Record<string, string> = {
 type FilterStatus = 'all' | 'active' | 'completed' | 'stopped';
 type FilterResponded = 'all' | 'yes' | 'no';
 
-export function OutreachClient({ outreach }: { outreach: CRROutreach[] }) {
+export function OutreachClient({ outreach, predictions = [] }: { outreach: CRROutreach[]; predictions?: CRRPrediction[] }) {
     const [search, setSearch] = useState("");
     const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
     const [filterResponded, setFilterResponded] = useState<FilterResponded>('all');
     const [expandedId, setExpandedId] = useState<number | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
+    
+    // Invoice Modal states
+    const [selectedOutreach, setSelectedOutreach] = useState<CRROutreach | null>(null);
+    const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
 
     const filtered = outreach.filter(o => {
         if (filterStatus !== 'all') {
@@ -154,13 +160,16 @@ export function OutreachClient({ outreach }: { outreach: CRROutreach[] }) {
                                     <th className="text-left px-4 py-3 text-[11px] font-bold text-[var(--label-secondary)] uppercase tracking-wider whitespace-nowrap">
                                         <ColumnInfo label="Last Contact" description={columnDescriptions.last_contacted} />
                                     </th>
+                                    <th className="text-left px-4 py-3 text-[11px] font-bold text-[var(--label-secondary)] uppercase tracking-wider whitespace-nowrap">
+                                        <ColumnInfo label="Invoice" description="Invoice required status" />
+                                    </th>
                                     <th className="px-4 py-3 w-10"></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[var(--separator)]">
                                 {paginated.length === 0 ? (
                                     <tr>
-                                        <td colSpan={8} className="text-center py-12 text-[var(--label-tertiary)]">
+                                        <td colSpan={9} className="text-center py-12 text-[var(--label-tertiary)]">
                                             {search || filterStatus !== 'all' || filterResponded !== 'all' ? 'No outreach records match your filters' : 'No outreach records found'}
                                         </td>
                                     </tr>
@@ -173,6 +182,10 @@ export function OutreachClient({ outreach }: { outreach: CRROutreach[] }) {
                                         formatDate={formatDate}
                                         formatDateTime={formatDateTime}
                                         statusVariant={statusVariant}
+                                        onOpenInvoice={(rec) => {
+                                            setSelectedOutreach(rec);
+                                            setIsInvoiceModalOpen(true);
+                                        }}
                                     />
                                 ))}
                             </tbody>
@@ -227,17 +240,32 @@ export function OutreachClient({ outreach }: { outreach: CRROutreach[] }) {
                     )}
                 </CardContent>
             </Card>
+            {selectedOutreach && (
+                <InvoiceModal
+                    isOpen={isInvoiceModalOpen}
+                    onClose={() => {
+                        setIsInvoiceModalOpen(false);
+                        setSelectedOutreach(null);
+                    }}
+                    record={selectedOutreach}
+                    prediction={predictions.find(p => p.party_name === selectedOutreach.party_name || p.id === selectedOutreach.prediction_id)}
+                    onSuccess={(msg) => {
+                        alert(msg);
+                    }}
+                />
+            )}
         </div>
     );
 }
 
-function OutreachRow({ record: o, isExpanded, onToggle, formatDate, formatDateTime, statusVariant }: {
+function OutreachRow({ record: o, isExpanded, onToggle, formatDate, formatDateTime, statusVariant, onOpenInvoice }: {
     record: CRROutreach;
     isExpanded: boolean;
     onToggle: () => void;
     formatDate: (d: string | null) => string;
     formatDateTime: (d: string | null) => string;
     statusVariant: (s: string | null, stopped?: boolean | null) => 'success' | 'danger' | 'info' | 'neutral';
+    onOpenInvoice: (rec: CRROutreach) => void;
 }) {
     return (
         <>
@@ -271,16 +299,25 @@ function OutreachRow({ record: o, isExpanded, onToggle, formatDate, formatDateTi
                 <td className="px-4 py-3.5">
                     <span className="text-xs text-[var(--label-secondary)]">{formatDateTime(o.last_contacted)}</span>
                 </td>
+                <td className="px-4 py-3.5">
+                    {o.invoice_needed?.toLowerCase() === 'yes' ? (
+                        <span className="inline-flex items-center gap-1 bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border border-amber-200">
+                            Required 📄
+                        </span>
+                    ) : (
+                        <span className="text-[var(--label-tertiary)] text-xs">—</span>
+                    )}
+                </td>
                 <td className="px-4 py-3.5 text-center">
                     {isExpanded ? <ChevronUp className="h-4 w-4 text-[var(--label-tertiary)]" /> : <ChevronDown className="h-4 w-4 text-[var(--label-tertiary)]" />}
                 </td>
             </tr>
             {isExpanded && (
                 <tr>
-                    <td colSpan={8} className="px-6 py-5 bg-[var(--fill-quaternary)]">
+                    <td colSpan={9} className="px-6 py-5 bg-[var(--fill-quaternary)]">
                         <div className="space-y-6">
                             {/* Contact Info */}
-                            <div className="flex flex-wrap gap-4">
+                            <div className="flex flex-wrap items-center gap-4">
                                 {o.phone && (
                                     <div className="flex items-center gap-2 bg-[var(--glass-fill)] rounded-lg px-3 py-2 border border-[var(--separator)]">
                                         <Phone className="h-3.5 w-3.5 text-purple-500" />
@@ -298,6 +335,17 @@ function OutreachRow({ record: o, isExpanded, onToggle, formatDate, formatDateTi
                                         <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
                                         <span className="text-sm text-emerald-700">{o.response_message}</span>
                                     </div>
+                                )}
+                                {o.invoice_needed?.toLowerCase() === 'yes' && (
+                                    <Button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onOpenInvoice(o);
+                                        }}
+                                        className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs gap-2 rounded-xl h-10 px-4 transition-colors ml-auto flex items-center"
+                                    >
+                                        📄 View & Edit Invoice
+                                    </Button>
                                 )}
                             </div>
 

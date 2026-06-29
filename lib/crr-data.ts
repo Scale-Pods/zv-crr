@@ -74,6 +74,7 @@ export interface CRROutreach {
     whatsapp_4_ts: string | null;
     whatsapp_4_status: string | null;
     whatsapp_4_template: string | null;
+    invoice_needed: string | null;
     // Meta
     created_at: string | null;
     updated_at: string | null;

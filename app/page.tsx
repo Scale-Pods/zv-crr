@@ -25,6 +25,7 @@ export default function LandingPage() {
                                 src="/zv_logo.webp"
                                 alt="Naples Homes Logo"
                                 fill
+                                sizes="160px"
                                 className="object-contain"
                                 priority
                             />
