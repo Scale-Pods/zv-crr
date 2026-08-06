@@ -209,32 +209,194 @@ function WaRow({ record: o, isExpanded, onToggle, formatDateTime, waStatusVarian
             {isExpanded && (
                 <tr>
                     <td colSpan={7} className="px-6 py-5 bg-[var(--fill-quaternary)]">
-                        <h4 className="text-xs font-bold text-[var(--label-secondary)] uppercase tracking-wider mb-3">Message Templates</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {[
-                                { label: 'Message 1', ts: o.whatsapp_1_ts, status: o.whatsapp_1_status, template: o.whatsapp_1_template },
-                                { label: 'Message 2', ts: o.whatsapp_2_ts, status: o.whatsapp_2_status, template: o.whatsapp_2_template },
-                                { label: 'Message 3', ts: o.whatsapp_3_ts, status: o.whatsapp_3_status, template: o.whatsapp_3_template },
-                                { label: 'Message 4', ts: o.whatsapp_4_ts, status: o.whatsapp_4_status, template: o.whatsapp_4_template },
-                            ].map((msg, i) => (
-                                <div key={i} className="bg-[var(--glass-fill)] rounded-xl border border-[var(--separator)] p-4">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-xs font-bold text-[var(--label-primary)]">{msg.label}</span>
-                                        {msg.status && <StatusBadge value={msg.status} variant={waStatusVariant(msg.status)} />}
-                                    </div>
-                                    {msg.ts && <p className="text-[10px] text-[var(--label-tertiary)] mb-2">Sent {formatDateTime(msg.ts)}</p>}
-                                    {msg.template ? (
-                                        <p className="text-xs text-[var(--label-secondary)] leading-relaxed whitespace-pre-wrap max-h-[150px] overflow-y-auto">{msg.template}</p>
-                                    ) : (
-                                        <p className="text-xs text-[var(--label-tertiary)] italic">{msg.ts ? 'Template not stored' : 'Not sent yet'}</p>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
+                        <WhatsAppChatWindow record={o} formatDateTime={formatDateTime} waStatusVariant={waStatusVariant} />
                     </td>
                 </tr>
             )}
         </>
+    );
+}
+
+function WhatsAppChatWindow({ record: o, formatDateTime, waStatusVariant }: {
+    record: CRROutreach;
+    formatDateTime: (d: string | null) => string;
+    waStatusVariant: (s: string | null) => 'success' | 'info' | 'warning' | 'danger' | 'neutral' | 'purple';
+}) {
+    // Construct sequential WhatsApp chat stream
+    interface ChatItem {
+        id: string;
+        sender: 'bot' | 'user' | 'system';
+        senderName: string;
+        text: string;
+        timestamp?: string | null;
+        status?: string | null;
+        isTemplate?: boolean;
+        badge?: string;
+    }
+
+    const chatItems: ChatItem[] = [];
+
+    // 1. Initial Outgoing Message (Bot/System Template)
+    if (o.whatsapp_1_template || o.whatsapp_1_ts) {
+        chatItems.push({
+            id: 'msg-1-template',
+            sender: 'bot',
+            senderName: 'Z V STEELS (Bot)',
+            text: o.whatsapp_1_template || 'Initial reorder reminder template',
+            timestamp: o.whatsapp_1_ts || o.outreach_start_date,
+            status: o.whatsapp_1_status || 'sent',
+            isTemplate: true,
+            badge: 'Initial Campaign Template',
+        });
+    }
+
+    // 2. Interleaved User and Bot Turns (1 through 10)
+    for (let i = 1; i <= 10; i++) {
+        const userMsg = (o as any)[`user_replied_${i}`];
+        const botMsg = (o as any)[`bot_replied_${i}`];
+        const botStatus = (o as any)[`bot_replied_status_${i}`];
+
+        if (userMsg) {
+            chatItems.push({
+                id: `user-reply-${i}`,
+                sender: 'user',
+                senderName: o.contact_person ? `${o.contact_person.trim()} (${o.party_name})` : o.party_name,
+                text: userMsg,
+            });
+        }
+        if (botMsg) {
+            chatItems.push({
+                id: `bot-reply-${i}`,
+                sender: 'bot',
+                senderName: 'Z V STEELS (Bot)',
+                text: botMsg,
+                status: botStatus || 'delivered',
+            });
+        }
+    }
+
+    // 3. Subsequent System / Invoice Templates (Steps 2-4)
+    [
+        { step: 2, template: o.whatsapp_2_template, ts: o.whatsapp_2_ts, status: o.whatsapp_2_status },
+        { step: 3, template: o.whatsapp_3_template, ts: o.whatsapp_3_ts, status: o.whatsapp_3_status },
+        { step: 4, template: o.whatsapp_4_template, ts: o.whatsapp_4_ts, status: o.whatsapp_4_status },
+    ].forEach(({ step, template, ts, status }) => {
+        if (template || ts) {
+            chatItems.push({
+                id: `template-step-${step}`,
+                sender: 'system',
+                senderName: `Z V STEELS (Message ${step})`,
+                text: template || `Campaign step ${step} dispatched`,
+                timestamp: ts,
+                status: status || 'delivered',
+                isTemplate: true,
+                badge: `Step ${step} Template`,
+            });
+        }
+    });
+
+    return (
+        <div className="rounded-2xl border border-[var(--separator)] bg-[var(--glass-fill)] overflow-hidden shadow-lg max-w-4xl mx-auto">
+            {/* WhatsApp Header Bar */}
+            <div className="bg-[var(--fill-quaternary)] px-5 py-3.5 border-b border-[var(--separator)] flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-sm">
+                        <MessageCircle className="h-5 w-5" />
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-sm font-bold text-[var(--label-primary)]">{o.party_name}</h3>
+                            {o.contact_person && (
+                                <span className="text-xs text-[var(--label-secondary)]">({o.contact_person.trim()})</span>
+                            )}
+                        </div>
+                        <p className="text-[11px] text-[var(--label-tertiary)] flex items-center gap-1.5">
+                            <span>WhatsApp: {o.phone || 'No phone'}</span>
+                            <span>•</span>
+                            <span className="text-emerald-600 font-medium">● Active Thread</span>
+                        </p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                        {chatItems.length} Messages
+                    </span>
+                </div>
+            </div>
+
+            {/* Conversation Timeline Body */}
+            <div className="p-6 space-y-4 max-h-[480px] overflow-y-auto bg-[var(--glass-fill)]/50">
+                {/* System Start Date Banner */}
+                <div className="flex justify-center my-1">
+                    <span className="text-[10px] font-bold text-[var(--label-tertiary)] uppercase tracking-wider bg-[var(--fill-quaternary)] px-3 py-1 rounded-full border border-[var(--separator)]">
+                        Outreach Started {formatDateTime(o.outreach_start_date || o.created_at)}
+                    </span>
+                </div>
+
+                {chatItems.length === 0 ? (
+                    <div className="text-center py-8 text-xs text-[var(--label-tertiary)] italic">
+                        No WhatsApp conversation logged for this party yet.
+                    </div>
+                ) : (
+                    chatItems.map((item) => {
+                        const isUser = item.sender === 'user';
+                        const isBot = item.sender === 'bot';
+                        const isSystem = item.sender === 'system';
+
+                        return (
+                            <div
+                                key={item.id}
+                                className={`flex flex-col ${isUser ? 'items-start' : 'items-end'} w-full`}
+                            >
+                                <div
+                                    className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-4 shadow-sm space-y-1.5 transition-all ${
+                                        isUser
+                                            ? 'bg-emerald-500/15 border border-emerald-500/25 rounded-tl-sm text-[var(--label-primary)]'
+                                            : isSystem
+                                            ? 'bg-purple-500/10 border border-purple-500/20 rounded-tr-sm text-[var(--label-primary)]'
+                                            : 'bg-blue-500/15 border border-blue-500/25 rounded-tr-sm text-[var(--label-primary)]'
+                                    }`}
+                                >
+                                    {/* Header info */}
+                                    <div className="flex items-center justify-between gap-3 text-[10px] pb-1 border-b border-[var(--separator)]/40">
+                                        <span className={`font-bold ${isUser ? 'text-emerald-600 dark:text-emerald-400' : isSystem ? 'text-purple-600 dark:text-purple-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                                            {item.senderName}
+                                        </span>
+                                        <div className="flex items-center gap-1.5">
+                                            {item.badge && (
+                                                <span className="px-1.5 py-0.5 rounded bg-[var(--fill-quaternary)] text-[9px] font-semibold text-[var(--label-secondary)]">
+                                                    {item.badge}
+                                                </span>
+                                            )}
+                                            {item.timestamp && (
+                                                <span className="text-[var(--label-tertiary)]">
+                                                    {formatDateTime(item.timestamp)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Body content */}
+                                    <p className="text-xs leading-relaxed whitespace-pre-wrap font-sans">
+                                        {item.text}
+                                    </p>
+
+                                    {/* Footer status ticks */}
+                                    {(isBot || isSystem) && (
+                                        <div className="flex items-center justify-end gap-1.5 text-[10px] pt-0.5">
+                                            {item.status && (
+                                                <StatusBadge value={item.status} variant={waStatusVariant(item.status)} />
+                                            )}
+                                            <CheckCheck className={`h-3.5 w-3.5 ${item.status?.toLowerCase() === 'read' ? 'text-purple-500' : 'text-blue-500'}`} />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })
+                )}
+            </div>
+        </div>
     );
 }
 

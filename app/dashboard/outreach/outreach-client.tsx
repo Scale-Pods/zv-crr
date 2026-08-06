@@ -13,7 +13,7 @@ const columnDescriptions: Record<string, string> = {
     contact_person: "Contact person at the customer's organization",
     phone: "Phone number used for voice and WhatsApp outreach",
     outreach_status: "Current status — Active (in progress), Completed (all steps done), or Stopped",
-    current_step: "Current step in the outreach sequence (0-9). Shows overall progress through voice, email, and WhatsApp touchpoints",
+    current_step: "Current progress in the 6-touchpoint CRR sequence (Day 0 to Day 6) across VAPI voice calls, email, and WhatsApp.",
     responded: "Whether the customer has responded through any channel",
     last_contacted: "Timestamp of the most recent outreach attempt",
     predicted_order_date: "AI-predicted next order date. Standard: last order + avg_gap + trend shift. Overdue: today + half of avg_gap. Date is strictly in the future.",
@@ -258,6 +258,27 @@ export function OutreachClient({ outreach, predictions = [] }: { outreach: CRROu
     );
 }
 
+function computeCrrTouchpointStep(o: CRROutreach): number {
+    let completed = 0;
+    // Touchpoint 1 (Day 0 - WF-01): Voice 1 / WA 1
+    if (o.voice_1_ts || o.whatsapp_1_ts) completed = 1;
+    // Touchpoint 2 (Day 1 - WF-02): Voice 2 / WA 2
+    if (o.voice_2_ts || o.whatsapp_2_ts) completed = 2;
+    // Touchpoint 3 (Day 2 - WF-03): Email 1
+    if (o.email_1_ts || o.email_1_content) completed = 3;
+    // Touchpoint 4 (Day 4 - WF-04): WhatsApp Follow-up (WA 3 or user reply)
+    if (o.whatsapp_3_ts || o.user_replied_1) completed = 4;
+    // Touchpoint 5 (Day 5 - WF-05): Email Follow-up (Email 2 or email reply)
+    if (o.email_2_ts || o.email_reply1) completed = 5;
+    // Touchpoint 6 (Day 6 - WF-06): Voice 3 / WA 4
+    if (o.voice_3_ts || o.whatsapp_4_ts) completed = 6;
+
+    if (o.current_step && o.current_step > 0) {
+        return Math.min(Math.max(o.current_step, completed), 6);
+    }
+    return completed;
+}
+
 function OutreachRow({ record: o, isExpanded, onToggle, formatDate, formatDateTime, statusVariant, onOpenInvoice }: {
     record: CRROutreach;
     isExpanded: boolean;
@@ -267,6 +288,8 @@ function OutreachRow({ record: o, isExpanded, onToggle, formatDate, formatDateTi
     statusVariant: (s: string | null, stopped?: boolean | null) => 'success' | 'danger' | 'info' | 'neutral';
     onOpenInvoice: (rec: CRROutreach) => void;
 }) {
+    const currentStep = computeCrrTouchpointStep(o);
+
     return (
         <>
             <tr className="hover:bg-[var(--fill-quaternary)] transition-colors cursor-pointer" onClick={onToggle}>
@@ -283,7 +306,7 @@ function OutreachRow({ record: o, isExpanded, onToggle, formatDate, formatDateTi
                     <StatusBadge value={o.stop_outreach ? 'Stopped' : (o.outreach_status || '—')} variant={statusVariant(o.outreach_status, o.stop_outreach)} />
                 </td>
                 <td className="px-4 py-3.5">
-                    <StepProgress current={o.current_step ?? 0} />
+                    <StepProgress current={currentStep} total={6} />
                 </td>
                 <td className="px-4 py-3.5">
                     {o.responded ? (
@@ -390,6 +413,107 @@ function OutreachRow({ record: o, isExpanded, onToggle, formatDate, formatDateTi
                                     formatDateTime={formatDateTime}
                                 />
                             </div>
+
+                            {/* Conversation Replies & Bot Log Threads */}
+                            {(o.user_replied_1 || o.email_reply1) && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-[var(--separator)]">
+                                    {/* WhatsApp Interactive Log */}
+                                    <div className="bg-[var(--glass-fill)] rounded-xl border border-[var(--separator)] p-4 space-y-3">
+                                        <h4 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+                                            <MessageCircle className="h-4 w-4" /> WhatsApp Thread
+                                        </h4>
+                                        <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
+                                            {/* Initial Bot Template */}
+                                            {(o.whatsapp_1_template || o.whatsapp_1_ts) && (
+                                                <div className="flex justify-end mb-2">
+                                                    <div className="max-w-[90%] rounded-xl bg-purple-500/10 border border-purple-500/20 px-3 py-2 text-right">
+                                                        <div className="flex items-center justify-between gap-2 mb-1">
+                                                            <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-[9px] font-bold text-purple-600 dark:text-purple-300 uppercase">Initial Campaign Template</span>
+                                                            <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400">ZV Bot</span>
+                                                        </div>
+                                                        <p className="text-xs text-[var(--label-primary)] text-left whitespace-pre-wrap">{o.whatsapp_1_template}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Interleaved Turns */}
+                                            {Array.from({ length: 10 }).map((_, idx) => {
+                                                const stepNum = idx + 1;
+                                                const userMsg = (o as any)[`user_replied_${stepNum}`];
+                                                const botMsg = (o as any)[`bot_replied_${stepNum}`];
+
+                                                if (!userMsg && !botMsg) return null;
+
+                                                return (
+                                                    <div key={stepNum} className="space-y-1.5">
+                                                        {userMsg && (
+                                                            <div className="flex justify-start">
+                                                                <div className="max-w-[90%] rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5">
+                                                                    <p className="text-[10px] font-bold text-emerald-600 mb-0.5">{o.contact_person || o.party_name}</p>
+                                                                    <p className="text-xs text-[var(--label-primary)]">{userMsg}</p>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        {botMsg && (
+                                                            <div className="flex justify-end">
+                                                                <div className="max-w-[90%] rounded-xl bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 text-right">
+                                                                    <p className="text-[10px] font-bold text-blue-600 mb-0.5">ZV Bot</p>
+                                                                    <p className="text-xs text-[var(--label-primary)] text-left">{botMsg}</p>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* Email Interactive Log */}
+                                    <div className="bg-[var(--glass-fill)] rounded-xl border border-[var(--separator)] p-4 space-y-3">
+                                        <h4 className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-2">
+                                            <Mail className="h-4 w-4" /> Email Thread
+                                        </h4>
+                                        <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
+                                            {/* Initial Email Template */}
+                                            {(o.email_1_content || o.email_1_ts) && (
+                                                <div className="p-2.5 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                                                    <div className="flex items-center justify-between gap-2 mb-1">
+                                                        <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-[9px] font-bold text-purple-600 dark:text-purple-300 uppercase">Initial Campaign Email</span>
+                                                        <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400">Z V STEELS</span>
+                                                    </div>
+                                                    <p className="text-xs text-[var(--label-primary)] whitespace-pre-wrap leading-relaxed">{o.email_1_content}</p>
+                                                </div>
+                                            )}
+
+                                            {/* Interleaved Turns */}
+                                            {Array.from({ length: 5 }).map((_, idx) => {
+                                                const stepNum = idx + 1;
+                                                const customerReply = (o as any)[`email_reply${stepNum}`];
+                                                const botReply = (o as any)[`email_bot_reply${stepNum}`];
+
+                                                if (!customerReply && !botReply) return null;
+
+                                                return (
+                                                    <div key={stepNum} className="space-y-2 p-2.5 rounded-lg bg-[var(--fill-quaternary)] border border-[var(--separator)]">
+                                                        {customerReply && (
+                                                            <div>
+                                                                <p className="text-[10px] font-bold text-emerald-600 mb-0.5">Incoming Customer Email (Reply #{stepNum})</p>
+                                                                <p className="text-xs text-[var(--label-primary)] whitespace-pre-wrap leading-relaxed">{customerReply}</p>
+                                                            </div>
+                                                        )}
+                                                        {botReply && (
+                                                            <div className="pt-2 border-t border-[var(--separator)]">
+                                                                <p className="text-[10px] font-bold text-blue-600 mb-0.5">Automated Bot Reply (Reply #{stepNum})</p>
+                                                                <p className="text-xs text-[var(--label-primary)] whitespace-pre-wrap leading-relaxed">{botReply}</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </td>
                 </tr>

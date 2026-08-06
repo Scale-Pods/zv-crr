@@ -39,7 +39,7 @@ export async function sendInvoiceEmailAction(details: InvoiceSendDetails) {
     // Clean base64 prefix if exists
     const cleanBase64 = pdfBase64.replace(/^data:application\/pdf;base64,/, '');
 
-    const n8nWebhookUrl = process.env.N8N_INVOICE_WEBHOOK_URL;
+    const n8nWebhookUrl = process.env.N8N_INVOICE_EMAIL_WEBHOOK_URL || process.env.N8N_INVOICE_WEBHOOK_URL;
     let useWebhook = !!n8nWebhookUrl;
 
     if (useWebhook) {
@@ -170,7 +170,7 @@ export async function sendInvoiceWhatsAppAction(details: InvoiceSendDetails) {
         return { error: 'Customer phone number is missing.' };
     }
 
-    const n8nWebhookUrl = process.env.N8N_INVOICE_WEBHOOK_URL;
+    const n8nWebhookUrl = process.env.N8N_INVOICE_WHATSAPP_WEBHOOK_URL || process.env.N8N_INVOICE_WEBHOOK_URL;
     let useWebhook = !!n8nWebhookUrl;
 
     try {

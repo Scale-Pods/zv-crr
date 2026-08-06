@@ -97,20 +97,61 @@ export function TrendIndicator({ value }: { value: string | null }) {
     );
 }
 
-/** Step progress bar */
-export function StepProgress({ current, total = 9 }: { current: number; total?: number }) {
-    const pct = Math.min((current / total) * 100, 100);
+export const CRR_SEQUENCE_TOUCHPOINTS = [
+    { step: 1, day: 'Day 0', channel: 'AI Voice Call (VAPI) + WA', wf: 'WF-01', purpose: 'First contact, gauge interest' },
+    { step: 2, day: 'Day 1', channel: 'AI Voice Call (VAPI) + WA', wf: 'WF-02', purpose: 'Follow up' },
+    { step: 3, day: 'Day 2', channel: 'Email', wf: 'WF-03', purpose: 'Formal written outreach' },
+    { step: 4, day: 'Day 4', channel: 'WhatsApp Follow-up', wf: 'WF-04', purpose: 'Re-engage if no response' },
+    { step: 5, day: 'Day 5', channel: 'Email Follow-up', wf: 'WF-05', purpose: 'Final email reminder' },
+    { step: 6, day: 'Day 6', channel: 'AI Voice Call (VAPI) + WA', wf: 'WF-06', purpose: 'Final call + WA before order date' },
+];
+
+/** Step progress bar for 6-touchpoint CRR outreach sequence */
+export function StepProgress({ current, total = 6 }: { current: number; total?: number }) {
+    const safeCurrent = Math.min(Math.max(current, 0), total);
+    const pct = Math.min((safeCurrent / total) * 100, 100);
+
     return (
-        <div className="flex items-center gap-2">
-            <div className="flex-1 h-2 rounded-full bg-[var(--fill-quaternary)] overflow-hidden">
-                <div
-                    className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500 transition-all duration-500"
-                    style={{ width: `${pct}%` }}
-                />
-            </div>
-            <span className="text-[10px] font-bold text-[var(--label-secondary)] whitespace-nowrap">
-                {current}/{total}
-            </span>
-        </div>
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className="flex items-center gap-2 cursor-pointer group min-w-[120px]">
+                        <div className="flex-1 h-2 rounded-full bg-[var(--fill-quaternary)] overflow-hidden border border-[var(--separator)]/50">
+                            <div
+                                className="h-full rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500 transition-all duration-500"
+                                style={{ width: `${pct}%` }}
+                            />
+                        </div>
+                        <span className="text-[10px] font-bold text-[var(--label-secondary)] group-hover:text-blue-500 transition-colors whitespace-nowrap">
+                            {safeCurrent}/{total}
+                        </span>
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-[320px] bg-slate-950/95 text-white border border-slate-800 p-3.5 shadow-2xl rounded-xl space-y-2">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span className="text-xs font-bold text-blue-400">6-Touchpoint CRR Sequence</span>
+                        <span className="text-[10px] font-semibold text-emerald-400 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                            {safeCurrent} of {total} Completed
+                        </span>
+                    </div>
+                    <div className="space-y-1.5 pt-1">
+                        {CRR_SEQUENCE_TOUCHPOINTS.map((tp) => {
+                            const isCompleted = safeCurrent >= tp.step;
+                            return (
+                                <div key={tp.step} className="flex items-start justify-between gap-2 text-[11px]">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isCompleted ? 'bg-emerald-400' : 'bg-slate-700'}`} />
+                                        <span className={`font-semibold ${isCompleted ? 'text-slate-200' : 'text-slate-400'}`}>
+                                            {tp.day}: {tp.channel}
+                                        </span>
+                                    </div>
+                                    <span className="text-[9px] font-mono text-slate-400">{tp.wf}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
     );
 }

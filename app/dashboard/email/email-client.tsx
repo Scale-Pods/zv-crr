@@ -176,15 +176,178 @@ function EmailRow({ record: o, isExpanded, onToggle, formatDateTime }: {
             {isExpanded && (
                 <tr>
                     <td colSpan={7} className="px-6 py-5 bg-[var(--fill-quaternary)]">
-                        <h4 className="text-xs font-bold text-[var(--label-secondary)] uppercase tracking-wider mb-3">Email Content</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <EmailContentBlock label="Email 1" content={o.email_1_content} ts={o.email_1_ts} replyTs={o.email_1_replied_ts} formatDateTime={formatDateTime} />
-                            <EmailContentBlock label="Email 2" content={o.email_2_content} ts={o.email_2_ts} replyTs={o.email_2_replied_ts} formatDateTime={formatDateTime} />
-                        </div>
+                        <EmailThreadWindow record={o} formatDateTime={formatDateTime} />
                     </td>
                 </tr>
             )}
         </>
+    );
+}
+
+function EmailThreadWindow({ record: o, formatDateTime }: {
+    record: CRROutreach;
+    formatDateTime: (d: string | null) => string;
+}) {
+    interface EmailItem {
+        id: string;
+        sender: 'bot' | 'user' | 'system';
+        senderName: string;
+        recipient: string;
+        text: string;
+        timestamp?: string | null;
+        badge: string;
+    }
+
+    const emailItems: EmailItem[] = [];
+
+    // 1. Initial Outgoing Email (First Template)
+    if (o.email_1_content || o.email_1_ts) {
+        emailItems.push({
+            id: 'email-1-template',
+            sender: 'bot',
+            senderName: 'Z V STEELS (System)',
+            recipient: o.email ? `${o.party_name} <${o.email}>` : o.party_name,
+            text: o.email_1_content || 'Initial reorder reminder email template',
+            timestamp: o.email_1_ts || o.outreach_start_date,
+            badge: 'Initial Campaign Email',
+        });
+    }
+
+    // 2. Interleaved Customer Replies & Bot Responses (Turns 1 through 5)
+    for (let i = 1; i <= 5; i++) {
+        const customerReply = (o as any)[`email_reply${i}`];
+        const botReply = (o as any)[`email_bot_reply${i}`];
+
+        if (customerReply) {
+            emailItems.push({
+                id: `customer-email-reply-${i}`,
+                sender: 'user',
+                senderName: o.contact_person ? `${o.contact_person.trim()} (${o.party_name})` : o.party_name,
+                recipient: 'Z V STEELS <outreach@zvsteels.com>',
+                text: customerReply,
+                badge: `Customer Reply #${i}`,
+            });
+        }
+
+        if (botReply) {
+            emailItems.push({
+                id: `bot-email-reply-${i}`,
+                sender: 'bot',
+                senderName: 'Z V STEELS (Automated Bot)',
+                recipient: o.email ? `${o.party_name} <${o.email}>` : o.party_name,
+                text: botReply,
+                badge: `Bot Reply #${i}`,
+            });
+        }
+    }
+
+    // 3. Subsequent Outgoing Emails (e.g. Email 2 / Invoice)
+    if (o.email_2_content || o.email_2_ts) {
+        emailItems.push({
+            id: 'email-2-content',
+            sender: 'system',
+            senderName: 'Z V STEELS (System)',
+            recipient: o.email ? `${o.party_name} <${o.email}>` : o.party_name,
+            text: o.email_2_content || 'Email 2 content dispatched',
+            timestamp: o.email_2_ts,
+            badge: 'Follow-up / Invoice Email',
+        });
+    }
+
+    return (
+        <div className="rounded-2xl border border-[var(--separator)] bg-[var(--glass-fill)] overflow-hidden shadow-lg max-w-4xl mx-auto">
+            {/* Header */}
+            <div className="bg-[var(--fill-quaternary)] px-5 py-3.5 border-b border-[var(--separator)] flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-sm">
+                        <Mail className="h-5 w-5" />
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-sm font-bold text-[var(--label-primary)]">{o.party_name}</h3>
+                            {o.contact_person && (
+                                <span className="text-xs text-[var(--label-secondary)]">({o.contact_person.trim()})</span>
+                            )}
+                        </div>
+                        <p className="text-[11px] text-[var(--label-tertiary)] flex items-center gap-1.5">
+                            <span>Email: {o.email || 'No email specified'}</span>
+                            <span>•</span>
+                            <span className="text-blue-600 font-medium">● Email Thread</span>
+                        </p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                        {emailItems.length} Emails Logged
+                    </span>
+                </div>
+            </div>
+
+            {/* Conversation Timeline Body */}
+            <div className="p-6 space-y-4 max-h-[500px] overflow-y-auto bg-[var(--glass-fill)]/50">
+                {/* System Banner */}
+                <div className="flex justify-center my-1">
+                    <span className="text-[10px] font-bold text-[var(--label-tertiary)] uppercase tracking-wider bg-[var(--fill-quaternary)] px-3 py-1 rounded-full border border-[var(--separator)]">
+                        Campaign Initiated {formatDateTime(o.email_1_ts || o.outreach_start_date || o.created_at)}
+                    </span>
+                </div>
+
+                {emailItems.length === 0 ? (
+                    <div className="text-center py-8 text-xs text-[var(--label-tertiary)] italic">
+                        No email history logged for this party.
+                    </div>
+                ) : (
+                    emailItems.map((item) => {
+                        const isUser = item.sender === 'user';
+                        const isBot = item.sender === 'bot';
+                        const isSystem = item.sender === 'system';
+
+                        return (
+                            <div key={item.id} className="w-full">
+                                <div
+                                    className={`rounded-xl p-4 border shadow-sm space-y-2 transition-all ${
+                                        isUser
+                                            ? 'bg-emerald-500/10 border-emerald-500/25 ml-4 sm:ml-8'
+                                            : isSystem
+                                            ? 'bg-purple-500/10 border-purple-500/20 mr-4 sm:mr-8'
+                                            : 'bg-blue-500/10 border-blue-500/25 mr-4 sm:mr-8'
+                                    }`}
+                                >
+                                    {/* Email Card Header */}
+                                    <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[var(--separator)]/40">
+                                        <div className="space-y-0.5">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`text-xs font-bold ${
+                                                    isUser ? 'text-emerald-600 dark:text-emerald-400' :
+                                                    isSystem ? 'text-purple-600 dark:text-purple-400' :
+                                                    'text-blue-600 dark:text-blue-400'
+                                                }`}>
+                                                    {item.senderName}
+                                                </span>
+                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[var(--fill-quaternary)] text-[var(--label-secondary)]">
+                                                    {item.badge}
+                                                </span>
+                                            </div>
+                                            <p className="text-[10px] text-[var(--label-tertiary)]">To: {item.recipient}</p>
+                                        </div>
+                                        {item.timestamp && (
+                                            <span className="text-[10px] text-[var(--label-tertiary)]">
+                                                {formatDateTime(item.timestamp)}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {/* Email Body Content */}
+                                    <div className="text-xs leading-relaxed text-[var(--label-primary)] whitespace-pre-wrap font-sans p-1">
+                                        {item.text}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })
+                )}
+            </div>
+        </div>
     );
 }
 
