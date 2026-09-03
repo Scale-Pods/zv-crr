@@ -6,7 +6,6 @@ import { Search, ChevronDown, ChevronUp, ArrowUpDown, Phone, Mail, MessageCircle
 import { ColumnInfo, StatusBadge, StepProgress } from "@/components/crr/ui-atoms";
 import { Button } from "@/components/ui/button";
 import type { CRROutreach, CRRPrediction } from "@/lib/crr-data";
-import { InvoiceModal } from "@/components/crr/invoice-modal";
 
 const columnDescriptions: Record<string, string> = {
     party_name: "Customer/party name being contacted for reorder",
@@ -28,10 +27,6 @@ export function OutreachClient({ outreach, predictions = [] }: { outreach: CRROu
     const [filterResponded, setFilterResponded] = useState<FilterResponded>('all');
     const [expandedId, setExpandedId] = useState<number | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
-    
-    // Invoice Modal states
-    const [selectedOutreach, setSelectedOutreach] = useState<CRROutreach | null>(null);
-    const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
 
     const filtered = outreach.filter(o => {
         if (filterStatus !== 'all') {
@@ -160,16 +155,13 @@ export function OutreachClient({ outreach, predictions = [] }: { outreach: CRROu
                                     <th className="text-left px-4 py-3 text-[11px] font-bold text-[var(--label-secondary)] uppercase tracking-wider whitespace-nowrap">
                                         <ColumnInfo label="Last Contact" description={columnDescriptions.last_contacted} />
                                     </th>
-                                    <th className="text-left px-4 py-3 text-[11px] font-bold text-[var(--label-secondary)] uppercase tracking-wider whitespace-nowrap">
-                                        <ColumnInfo label="Invoice" description="Invoice required status" />
-                                    </th>
                                     <th className="px-4 py-3 w-10"></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[var(--separator)]">
                                 {paginated.length === 0 ? (
                                     <tr>
-                                        <td colSpan={9} className="text-center py-12 text-[var(--label-tertiary)]">
+                                        <td colSpan={8} className="text-center py-12 text-[var(--label-tertiary)]">
                                             {search || filterStatus !== 'all' || filterResponded !== 'all' ? 'No outreach records match your filters' : 'No outreach records found'}
                                         </td>
                                     </tr>
@@ -182,10 +174,6 @@ export function OutreachClient({ outreach, predictions = [] }: { outreach: CRROu
                                         formatDate={formatDate}
                                         formatDateTime={formatDateTime}
                                         statusVariant={statusVariant}
-                                        onOpenInvoice={(rec) => {
-                                            setSelectedOutreach(rec);
-                                            setIsInvoiceModalOpen(true);
-                                        }}
                                     />
                                 ))}
                             </tbody>
@@ -240,20 +228,6 @@ export function OutreachClient({ outreach, predictions = [] }: { outreach: CRROu
                     )}
                 </CardContent>
             </Card>
-            {selectedOutreach && (
-                <InvoiceModal
-                    isOpen={isInvoiceModalOpen}
-                    onClose={() => {
-                        setIsInvoiceModalOpen(false);
-                        setSelectedOutreach(null);
-                    }}
-                    record={selectedOutreach}
-                    prediction={predictions.find(p => p.party_name === selectedOutreach.party_name || p.id === selectedOutreach.prediction_id)}
-                    onSuccess={(msg) => {
-                        alert(msg);
-                    }}
-                />
-            )}
         </div>
     );
 }
@@ -279,14 +253,13 @@ function computeCrrTouchpointStep(o: CRROutreach): number {
     return completed;
 }
 
-function OutreachRow({ record: o, isExpanded, onToggle, formatDate, formatDateTime, statusVariant, onOpenInvoice }: {
+function OutreachRow({ record: o, isExpanded, onToggle, formatDate, formatDateTime, statusVariant }: {
     record: CRROutreach;
     isExpanded: boolean;
     onToggle: () => void;
     formatDate: (d: string | null) => string;
     formatDateTime: (d: string | null) => string;
     statusVariant: (s: string | null, stopped?: boolean | null) => 'success' | 'danger' | 'info' | 'neutral';
-    onOpenInvoice: (rec: CRROutreach) => void;
 }) {
     const currentStep = computeCrrTouchpointStep(o);
 
@@ -322,22 +295,13 @@ function OutreachRow({ record: o, isExpanded, onToggle, formatDate, formatDateTi
                 <td className="px-4 py-3.5">
                     <span className="text-xs text-[var(--label-secondary)]">{formatDateTime(o.last_contacted)}</span>
                 </td>
-                <td className="px-4 py-3.5">
-                    {o.invoice_needed?.toLowerCase() === 'yes' ? (
-                        <span className="inline-flex items-center gap-1 bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border border-amber-200">
-                            Required 📄
-                        </span>
-                    ) : (
-                        <span className="text-[var(--label-tertiary)] text-xs">—</span>
-                    )}
-                </td>
                 <td className="px-4 py-3.5 text-center">
                     {isExpanded ? <ChevronUp className="h-4 w-4 text-[var(--label-tertiary)]" /> : <ChevronDown className="h-4 w-4 text-[var(--label-tertiary)]" />}
                 </td>
             </tr>
             {isExpanded && (
                 <tr>
-                    <td colSpan={9} className="px-6 py-5 bg-[var(--fill-quaternary)]">
+                    <td colSpan={8} className="px-6 py-5 bg-[var(--fill-quaternary)]">
                         <div className="space-y-6">
                             {/* Contact Info */}
                             <div className="flex flex-wrap items-center gap-4">
@@ -358,17 +322,6 @@ function OutreachRow({ record: o, isExpanded, onToggle, formatDate, formatDateTi
                                         <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
                                         <span className="text-sm text-emerald-700">{o.response_message}</span>
                                     </div>
-                                )}
-                                {o.invoice_needed?.toLowerCase() === 'yes' && (
-                                    <Button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onOpenInvoice(o);
-                                        }}
-                                        className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs gap-2 rounded-xl h-10 px-4 transition-colors ml-auto flex items-center"
-                                    >
-                                        📄 View & Edit Invoice
-                                    </Button>
                                 )}
                             </div>
 
@@ -441,6 +394,7 @@ function OutreachRow({ record: o, isExpanded, onToggle, formatDate, formatDateTi
                                                 const stepNum = idx + 1;
                                                 const userMsg = (o as any)[`user_replied_${stepNum}`];
                                                 const botMsg = (o as any)[`bot_replied_${stepNum}`];
+                                                const botStatus = (o as any)[`bot_replied_status_${stepNum}`];
 
                                                 if (!userMsg && !botMsg) return null;
 
@@ -449,7 +403,10 @@ function OutreachRow({ record: o, isExpanded, onToggle, formatDate, formatDateTi
                                                         {userMsg && (
                                                             <div className="flex justify-start">
                                                                 <div className="max-w-[90%] rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5">
-                                                                    <p className="text-[10px] font-bold text-emerald-600 mb-0.5">{o.contact_person || o.party_name}</p>
+                                                                    <div className="flex items-center justify-between gap-2 mb-0.5">
+                                                                        <p className="text-[10px] font-bold text-emerald-600">{o.contact_person || o.party_name}</p>
+                                                                        <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold">User Replied #{stepNum}</span>
+                                                                    </div>
                                                                     <p className="text-xs text-[var(--label-primary)]">{userMsg}</p>
                                                                 </div>
                                                             </div>
@@ -457,8 +414,17 @@ function OutreachRow({ record: o, isExpanded, onToggle, formatDate, formatDateTi
                                                         {botMsg && (
                                                             <div className="flex justify-end">
                                                                 <div className="max-w-[90%] rounded-xl bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 text-right">
-                                                                    <p className="text-[10px] font-bold text-blue-600 mb-0.5">ZV Bot</p>
+                                                                    <div className="flex items-center justify-between gap-2 mb-0.5">
+                                                                        <span className="text-[9px] px-1 py-0.2 rounded bg-blue-500/20 text-blue-700 dark:text-blue-300 font-semibold">Bot Replied #{stepNum}</span>
+                                                                        <p className="text-[10px] font-bold text-blue-600">ZV Bot</p>
+                                                                    </div>
                                                                     <p className="text-xs text-[var(--label-primary)] text-left">{botMsg}</p>
+                                                                    {botStatus && (
+                                                                        <div className="flex items-center justify-end gap-1 mt-1 text-[9px]">
+                                                                            <span className="text-[var(--label-tertiary)]">Status:</span>
+                                                                            <StatusBadge value={botStatus} variant={statusVariant(botStatus)} />
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         )}

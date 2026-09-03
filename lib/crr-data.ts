@@ -74,6 +74,7 @@ export interface CRROutreach {
     whatsapp_4_ts: string | null;
     whatsapp_4_status: string | null;
     whatsapp_4_template: string | null;
+    invoice_needed?: string | null;
     // WhatsApp Bot / User Replies
     user_replied_1?: string | null;
     user_replied_2?: string | null;
@@ -182,6 +183,59 @@ export async function fetchOutreach(): Promise<CRROutreach[]> {
     }
     return allData;
 }
+
+export interface VapiCallLog {
+    id: string;
+    started_at: string | null;
+    customer_phone: string | null;
+    customer_name: string | null;
+    duration_seconds: number | null;
+    status: string | null;
+    cost_usd: number | null;
+    source: string | null;
+    transcript: any | null;
+    summary: string | null;
+    recording_url: string | null;
+    created_at: string | null;
+    updated_at: string | null;
+    vapi_account: string | null;
+    assistantId: string | null;
+    type: string | null;
+    voice_call_status: string | null;
+    note: string | null;
+    master_leads_id: string | null;
+}
+
+export async function fetchVapiCallLogs(): Promise<VapiCallLog[]> {
+    let allData: VapiCallLog[] = [];
+    let from = 0;
+    let limit = 1000;
+    let hasMore = true;
+
+    while (hasMore) {
+        const { data, error } = await supabaseAdmin
+            .from('vapi_call_logs')
+            .select('*')
+            .order('started_at', { ascending: false })
+            .range(from, from + limit - 1);
+        if (error) {
+            console.error('fetchVapiCallLogs error:', error);
+            return allData;
+        }
+        if (data && data.length > 0) {
+            allData = [...allData, ...data];
+            if (data.length < limit) {
+                hasMore = false;
+            } else {
+                from += limit;
+            }
+        } else {
+            hasMore = false;
+        }
+    }
+    return allData;
+}
+
 
 // ─── Computed Metrics ───────────────────────────────────────────────────────
 
