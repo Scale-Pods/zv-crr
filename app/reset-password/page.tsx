@@ -8,27 +8,89 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Lock, ArrowRight, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { resetPassword } from '@/app/actions/auth';
+import { supabase } from '@/lib/supabase';
 
 export default function ResetPasswordPage() {
     const [accessToken, setAccessToken] = useState<string | null>(null);
     const [hashError, setHashError] = useState<string | null>(null);
+    const [isVerifying, setIsVerifying] = useState(true);
     const router = useRouter();
 
     const [state, action, isPending] = useActionState(resetPassword, null as any);
 
     useEffect(() => {
-        const hash = window.location.hash.substring(1);
-        const params = new URLSearchParams(hash);
-        const type = params.get('type');
-        const token = params.get('access_token');
+        async function verifyAndExtractToken() {
+            setIsVerifying(true);
+            try {
+                const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                const searchParams = new URLSearchParams(window.location.search);
 
-        if (!token || type !== 'recovery') {
-            setHashError('Invalid or expired reset link. Please request a new one.');
-        } else {
-            setAccessToken(token);
-            // Remove the token from the URL bar
-            window.history.replaceState(null, '', window.location.pathname);
+                // 1. Check for errors returned in hash or search
+                const rawErrorDesc = hashParams.get('error_description') || searchParams.get('error_description');
+                const rawError = hashParams.get('error') || searchParams.get('error');
+
+                if (rawError || rawErrorDesc) {
+                    const desc = rawErrorDesc
+                        ? decodeURIComponent(rawErrorDesc.replace(/\+/g, ' '))
+                        : 'Invalid or expired reset link. Please request a new one.';
+                    setHashError(desc);
+                    setIsVerifying(false);
+                    return;
+                }
+
+                // 2. Check for access_token directly in hash or search
+                let token = hashParams.get('access_token') || searchParams.get('access_token');
+
+                // 3. Check for PKCE code
+                const code = searchParams.get('code');
+                if (!token && code) {
+                    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+                    if (!error && data.session) {
+                        token = data.session.access_token;
+                    } else if (error) {
+                        console.error('PKCE exchange error:', error);
+                    }
+                }
+
+                // 4. Check for token_hash
+                const tokenHash = searchParams.get('token_hash');
+                const type = searchParams.get('type') || hashParams.get('type');
+                if (!token && tokenHash) {
+                    const { data, error } = await supabase.auth.verifyOtp({
+                        token_hash: tokenHash,
+                        type: (type as any) || 'recovery',
+                    });
+                    if (!error && data.session) {
+                        token = data.session.access_token;
+                    } else if (error) {
+                        console.error('Verify OTP error:', error);
+                    }
+                }
+
+                // 5. Check if Supabase JS client automatically restored session from URL
+                if (!token) {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session?.access_token) {
+                        token = session.access_token;
+                    }
+                }
+
+                if (token) {
+                    setAccessToken(token);
+                    // Clear tokens from URL bar without full page reload
+                    window.history.replaceState(null, '', window.location.pathname);
+                } else {
+                    setHashError('Invalid or expired reset link. Please request a new one.');
+                }
+            } catch (err) {
+                console.error('Error verifying reset token:', err);
+                setHashError('Invalid or expired reset link. Please request a new one.');
+            } finally {
+                setIsVerifying(false);
+            }
         }
+
+        verifyAndExtractToken();
     }, []);
 
     useEffect(() => {
@@ -54,8 +116,18 @@ export default function ResetPasswordPage() {
                         </div>
                     </div>
 
+                    {/* Loading verification state */}
+                    {isVerifying && (
+                        <div className="py-12 text-center space-y-4 animate-in fade-in duration-300">
+                            <div className="flex justify-center">
+                                <Loader2 className="h-8 w-8 text-emerald-400 animate-spin" />
+                            </div>
+                            <p className="text-[var(--label-secondary)] text-sm">Verifying reset link…</p>
+                        </div>
+                    )}
+
                     {/* Invalid link */}
-                    {hashError && (
+                    {!isVerifying && hashError && (
                         <div className="space-y-6 text-center animate-in fade-in zoom-in-95 duration-300">
                             <div className="flex justify-center">
                                 <div className="h-16 w-16 rounded-full bg-red-500/10 flex items-center justify-center">
@@ -77,7 +149,7 @@ export default function ResetPasswordPage() {
                     )}
 
                     {/* Success */}
-                    {!hashError && state?.success && (
+                    {!isVerifying && !hashError && state?.success && (
                         <div className="space-y-6 text-center animate-in fade-in zoom-in-95 duration-300">
                             <div className="flex justify-center">
                                 <div className="h-16 w-16 rounded-full bg-emerald-500/10 flex items-center justify-center">
@@ -96,7 +168,7 @@ export default function ResetPasswordPage() {
                     )}
 
                     {/* Form */}
-                    {!hashError && !state?.success && (
+                    {!isVerifying && !hashError && !state?.success && (
                         <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
                             <div className="space-y-2 text-center">
                                 <h1 className="text-3xl font-bold tracking-tighter text-[var(--label-primary)]">Set New Password</h1>
@@ -170,3 +242,4 @@ export default function ResetPasswordPage() {
         </div>
     );
 }
+

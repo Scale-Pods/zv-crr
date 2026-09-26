@@ -1,6 +1,6 @@
 'use server';
 
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@/lib/supabase';
 import { hashPassword, comparePassword } from '@/lib/auth-utils';
@@ -10,8 +10,22 @@ import crypto from 'crypto';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-fallback-secret-change-this';
 const secret = new TextEncoder().encode(JWT_SECRET);
 
+async function getAppUrl() {
+    try {
+        const headerList = await headers();
+        const host = headerList.get('host') || headerList.get('x-forwarded-host');
+        const proto = headerList.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
+        if (host && !host.includes('localhost')) {
+            return `${proto}://${host}`;
+        }
+    } catch {
+        // ignore headers read error
+    }
+    return (process.env.NEXT_PUBLIC_APP_URL || 'https://zv-crr.vercel.app').replace(/\/$/, '');
+}
+
 export async function login(prevState: any, formData: FormData) {
-    const email = formData.get('email') as string;
+    const email = (formData.get('email') as string)?.toLowerCase().trim();
     const password = formData.get('password') as string;
 
     if (!email || !password) {
@@ -22,7 +36,7 @@ export async function login(prevState: any, formData: FormData) {
         const { data: user, error } = await supabaseAdmin
             .from('users')
             .select('*')
-            .eq('email', email)
+            .ilike('email', email)
             .single();
 
         if (error || !user) {
@@ -87,35 +101,35 @@ export async function forgotPassword(prevState: any, formData: FormData) {
         // Only send email if account exists in the custom users table
         const { data: user } = await supabaseAdmin
             .from('users')
-            .select('id')
-            .eq('email', email)
+            .select('id, email')
+            .ilike('email', email)
             .maybeSingle();
 
         if (user) {
             // Ensure a shadow Supabase Auth user exists so resetPasswordForEmail works.
             // createUser returns an error if the user already exists — that's fine, we ignore it.
             await supabaseAdmin.auth.admin.createUser({
-                email,
+                email: user.email,
                 email_confirm: true,
                 password: crypto.randomUUID(),
             });
 
-            const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');
-            const { error: resetError } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
+            const appUrl = await getAppUrl();
+            const { error: resetError } = await supabaseAdmin.auth.resetPasswordForEmail(user.email, {
                 redirectTo: `${appUrl}/reset-password`,
             });
 
             if (resetError) {
                 console.error('Supabase resetPasswordForEmail error:', resetError);
-                return { error: 'Failed to send reset email. Please try again.' };
+                return { error: resetError.message || 'Failed to send reset email. Please try again.' };
             }
         }
 
         // Always return success — never reveal whether the email exists
         return { success: true };
-    } catch (err) {
+    } catch (err: any) {
         console.error('Forgot password error:', err);
-        return { error: 'An unexpected error occurred' };
+        return { error: err?.message || 'An unexpected error occurred' };
     }
 }
 
@@ -145,10 +159,18 @@ export async function resetPassword(prevState: any, formData: FormData) {
         const { data: { user }, error: tokenError } = await supabaseAnon.auth.getUser(accessToken);
 
         if (tokenError || !user?.email) {
+            console.error('getUser token error:', tokenError);
             return { error: 'Invalid or expired reset link. Please request a new one.' };
         }
 
-        // Update the custom users table
+        // 1. Also update password in Supabase Auth user record if present
+        if (user.id) {
+            await supabaseAdmin.auth.admin.updateUserById(user.id, {
+                password: password,
+            });
+        }
+
+        // 2. Update the custom users table
         const passwordHash = await hashPassword(password);
         const { error: updateError } = await supabaseAdmin
             .from('users')
@@ -156,7 +178,7 @@ export async function resetPassword(prevState: any, formData: FormData) {
                 password_hash: passwordHash,
                 password_changed_at: new Date().toISOString(),
             })
-            .eq('email', user.email);
+            .ilike('email', user.email);
 
         if (updateError) {
             console.error('Password update error:', updateError);
@@ -169,3 +191,4 @@ export async function resetPassword(prevState: any, formData: FormData) {
         return { error: 'An unexpected error occurred' };
     }
 }
+
