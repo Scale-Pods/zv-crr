@@ -28,6 +28,43 @@ export function OutreachClient({ outreach, predictions = [] }: { outreach: CRROu
     const [expandedId, setExpandedId] = useState<number | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
 
+    // Helper to calculate total step count for sorting
+    const getLeadStepCount = (o: CRROutreach): number => {
+        let touchedCount = 0;
+        if (o.voice_1_ts) touchedCount++;
+        if (o.voice_2_ts) touchedCount++;
+        if (o.voice_3_ts) touchedCount++;
+        if (o.email_1_ts) touchedCount++;
+        if (o.email_2_ts) touchedCount++;
+        if (o.whatsapp_1_ts) touchedCount++;
+        if (o.whatsapp_2_ts) touchedCount++;
+        if (o.whatsapp_3_ts) touchedCount++;
+        if (o.whatsapp_4_ts) touchedCount++;
+        return Math.max(o.current_step || 0, touchedCount);
+    };
+
+    // Helper to calculate latest timestamp for sorting
+    const getLeadLatestTimestamp = (o: CRROutreach): number => {
+        const dates = [
+            o.last_contacted,
+            o.outreach_start_date,
+            o.voice_1_ts,
+            o.voice_2_ts,
+            o.voice_3_ts,
+            o.email_1_ts,
+            o.email_2_ts,
+            o.whatsapp_1_ts,
+            o.whatsapp_2_ts,
+            o.whatsapp_3_ts,
+            o.whatsapp_4_ts,
+            o.response_timestamp
+        ].filter(Boolean) as string[];
+
+        if (dates.length === 0) return 0;
+        const timestamps = dates.map(d => new Date(d).getTime()).filter(t => !isNaN(t));
+        return timestamps.length > 0 ? Math.max(...timestamps) : 0;
+    };
+
     const filtered = outreach.filter(o => {
         if (filterStatus !== 'all') {
             const status = (o.outreach_status || '').toLowerCase();
@@ -45,6 +82,15 @@ export function OutreachClient({ outreach, predictions = [] }: { outreach: CRROu
             (o.phone || '').toLowerCase().includes(q) ||
             (o.email || '').toLowerCase().includes(q)
         );
+    }).sort((a, b) => {
+        const stepsA = getLeadStepCount(a);
+        const stepsB = getLeadStepCount(b);
+        if (stepsB !== stepsA) {
+            return stepsB - stepsA; // Descending by step count
+        }
+        const dateA = getLeadLatestTimestamp(a);
+        const dateB = getLeadLatestTimestamp(b);
+        return dateB - dateA; // Descending by latest date
     });
 
     const handleSearchChange = (val: string) => {
